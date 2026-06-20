@@ -1,0 +1,47 @@
+version: "3.9"
+
+# Services are the individual containers that make up the application.
+# This compose file defines two services: the backend API and the frontend dashboard.
+
+services:
+
+  backend:
+    # Build the backend image from the Dockerfile in the backend/ folder.
+    build: ./backend
+
+    # Map port 8000 on the host machine to port 8000 inside the container.
+    # Format is host_port:container_port.
+    # After this, http://localhost:8000 on your laptop reaches the FastAPI server.
+    ports:
+      - "8000:8000"
+
+    # Mount the backend/data folder from your laptop into the container.
+    # This means the SQLite database file persists on your laptop even if the
+    # container is stopped or removed. Without this, every restart loses the data.
+    volumes:
+      - ./backend/data:/app/data
+
+    # Load environment variables from the .env file.
+    # Copy backend/.env.sample to backend/.env and edit it — .env is what
+    # actually gets loaded, .env.sample is just the template.
+    env_file:
+      - ./backend/.env
+
+    # Restart the container automatically if it crashes.
+    restart: unless-stopped
+
+  frontend:
+    # Build the frontend image from the Dockerfile in the frontend/ folder.
+    build: ./frontend
+
+    # Map port 3000 on the host to port 80 inside the container.
+    # The React app is served by nginx on port 80 inside the container.
+    # After this, http://localhost:3000 on your laptop shows the dashboard.
+    ports:
+      - "3000:80"
+
+    # The frontend depends on the backend being up first.
+    depends_on:
+      - backend
+
+    restart: unless-stopped
